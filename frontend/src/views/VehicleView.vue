@@ -206,7 +206,7 @@
                     console.error('提交车辆信息失败:', error)
                     this.submitResult = {
                         type: 'error-msg',
-                        message: error.response?.data?.message || '网络错误，请稍后重试'
+                        message: error.response?.data?.message || ''
                     }
                 } finally {
                     this.submitting = false
