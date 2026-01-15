@@ -41,11 +41,11 @@ class FleetController {
             const fleetsResult = await pool.request()
                 .input('dcId', sql.VarChar(10), dcId)
                 .query(`
-          SELECT f.Fleet_ID, f.Fleet_Name
-          FROM Fleet f
-          WHERE f.DC_ID = @dcId
-          ORDER BY f.Fleet_ID
-        `)
+                    SELECT f.Fleet_ID, f.Fleet_Name
+                    FROM Fleet f
+                    WHERE f.DC_ID = @dcId
+                    ORDER BY f.Fleet_ID
+                    `)
 
             const fleetData = []
 
@@ -55,31 +55,31 @@ class FleetController {
                 const vehiclesResult = await pool.request()
                     .input('fleetId', sql.VarChar(10), fleet.Fleet_ID)
                     .query(`
-            SELECT 
-              v.License_Plate,
-              v.Current_Status,
-              v.Max_Load,
-              v.Max_Volume,
-              d.Driver_Name,
-              ae.Description as Abnormal_Reason,
-              (
-                SELECT MAX(Create_Time)
-                FROM [Order] o
-                WHERE o.License_Plate = v.License_Plate
-              ) as Last_Order_Time,
-              ISNULL((
-                SELECT SUM(Goods_Weight)
-                FROM [Order] o
-                WHERE o.License_Plate = v.License_Plate
-                AND o.Transport_Status IN ('待运输','装货中','运输中')
-              ), 0) as Current_Load
-            FROM Vehicle v
-            LEFT JOIN Driver d ON v.Fleet_ID = d.Fleet_ID AND d.Driver_ID LIKE '%主管%'
-            LEFT JOIN AbnormalEvent ae ON v.License_Plate = ae.License_Plate 
-              AND ae.Handle_Status = '未处理'
-            WHERE v.Fleet_ID = @fleetId
-            ORDER BY v.Current_Status, v.License_Plate
-          `)
+                        SELECT 
+                        v.License_Plate,
+                        v.Current_Status,
+                        v.Max_Load,
+                        v.Max_Volume,
+                        d.Driver_Name,
+                        ae.Description as Abnormal_Reason,
+                        (
+                            SELECT MAX(Create_Time)
+                            FROM [Order] o
+                            WHERE o.License_Plate = v.License_Plate
+                        ) as Last_Order_Time,
+                        ISNULL((
+                            SELECT SUM(Goods_Weight)
+                            FROM [Order] o
+                            WHERE o.License_Plate = v.License_Plate
+                            AND o.Transport_Status IN ('待运输','装货中','运输中')
+                        ), 0) as Current_Load
+                        FROM Vehicle v
+                        LEFT JOIN Driver d ON v.Fleet_ID = d.Fleet_ID AND d.Driver_ID LIKE '%主管%'
+                        LEFT JOIN AbnormalEvent ae ON v.License_Plate = ae.License_Plate 
+                        AND ae.Handle_Status = '未处理'
+                        WHERE v.Fleet_ID = @fleetId
+                        ORDER BY v.Current_Status, v.License_Plate
+                    `)
 
                 const vehicles = vehiclesResult.recordset.map(vehicle => ({
                     licensePlate: vehicle.License_Plate,
@@ -180,19 +180,19 @@ class FleetController {
                 .input('year', sql.Int, parseInt(year))
                 .input('month', sql.Int, parseInt(month))
                 .query(`
-          SELECT 
-            COUNT(*) as totalOrders,
-            SUM(Goods_Weight) as totalWeight,
-            AVG(DATEDIFF(HOUR, Create_Time, Sign_Time)) as avgDeliveryHours,
-            SUM(CASE WHEN DATEDIFF(HOUR, Create_Time, Sign_Time) <= 4 THEN 1 ELSE 0 END) as onTimeDeliveries
-          FROM [Order] o
-          JOIN Vehicle v ON o.License_Plate = v.License_Plate
-          WHERE v.Fleet_ID = @fleetId
-          AND YEAR(o.Create_Time) = @year
-          AND MONTH(o.Create_Time) = @month
-          AND o.Transport_Status = '已签收'
-          AND o.Sign_Time IS NOT NULL
-        `)
+                    SELECT 
+                        COUNT(*) as totalOrders,
+                        SUM(Goods_Weight) as totalWeight,
+                        AVG(DATEDIFF(HOUR, Create_Time, Sign_Time)) as avgDeliveryHours,
+                        SUM(CASE WHEN DATEDIFF(HOUR, Create_Time, Sign_Time) <= 4 THEN 1 ELSE 0 END) as onTimeDeliveries
+                    FROM [Order] o
+                    JOIN Vehicle v ON o.License_Plate = v.License_Plate
+                    WHERE v.Fleet_ID = @fleetId
+                    AND YEAR(o.Create_Time) = @year
+                    AND MONTH(o.Create_Time) = @month
+                    AND o.Transport_Status = '已签收'
+                    AND o.Sign_Time IS NOT NULL
+                    `)
 
             // 2. 异常事件分布
             const eventDistribution = await pool.request()
@@ -200,17 +200,17 @@ class FleetController {
                 .input('year', sql.Int, parseInt(year))
                 .input('month', sql.Int, parseInt(month))
                 .query(`
-          SELECT 
-            Event_Type,
-            COUNT(*) as eventCount,
-            AVG(Fine_Amount) as avgFineAmount
-          FROM AbnormalEvent ae
-          JOIN Vehicle v ON ae.License_Plate = v.License_Plate
-          WHERE v.Fleet_ID = @fleetId
-          AND YEAR(ae.Occur_Time) = @year
-          AND MONTH(ae.Occur_Time) = @month
-          GROUP BY Event_Type
-        `)
+                    SELECT 
+                        Event_Type,
+                        COUNT(*) as eventCount,
+                        AVG(Fine_Amount) as avgFineAmount
+                    FROM AbnormalEvent ae
+                    JOIN Vehicle v ON ae.License_Plate = v.License_Plate
+                    WHERE v.Fleet_ID = @fleetId
+                    AND YEAR(ae.Occur_Time) = @year
+                    AND MONTH(ae.Occur_Time) = @month
+                    GROUP BY Event_Type
+                    `)
 
             // 3. 司机绩效排名
             const driverRanking = await pool.request()
@@ -218,27 +218,27 @@ class FleetController {
                 .input('year', sql.Int, parseInt(year))
                 .input('month', sql.Int, parseInt(month))
                 .query(`
-          SELECT TOP 10
-            d.Driver_ID,
-            d.Driver_Name,
-            COUNT(DISTINCT o.Order_ID) as orderCount,
-            COUNT(DISTINCT ae.Event_ID) as abnormalCount,
-            ISNULL(SUM(ae.Fine_Amount), 0) as totalFines,
-            CASE 
-              WHEN COUNT(DISTINCT o.Order_ID) > 0 THEN 
-                (COUNT(DISTINCT o.Order_ID) * 100.0 - ISNULL(SUM(ae.Fine_Amount), 0)) / COUNT(DISTINCT o.Order_ID)
-              ELSE 0 
-            END as performanceScore
-          FROM Driver d
-          LEFT JOIN [Order] o ON d.Fleet_ID = (SELECT Fleet_ID FROM Vehicle WHERE License_Plate = o.License_Plate)
-            AND YEAR(o.Create_Time) = @year AND MONTH(o.Create_Time) = @month
-          LEFT JOIN AbnormalEvent ae ON d.Driver_ID = ae.Driver_ID
-            AND YEAR(ae.Occur_Time) = @year AND MONTH(ae.Occur_Time) = @month
-          WHERE d.Fleet_ID = @fleetId
-          GROUP BY d.Driver_ID, d.Driver_Name
-          HAVING COUNT(DISTINCT o.Order_ID) > 0
-          ORDER BY performanceScore DESC
-        `)
+                SELECT TOP 10
+                    d.Driver_ID,
+                    d.Driver_Name,
+                    COUNT(DISTINCT o.Order_ID) as orderCount,
+                    COUNT(DISTINCT ae.Event_ID) as abnormalCount,
+                    ISNULL(SUM(ae.Fine_Amount), 0) as totalFines,
+                    CASE 
+                    WHEN COUNT(DISTINCT o.Order_ID) > 0 THEN 
+                        (COUNT(DISTINCT o.Order_ID) * 100.0 - ISNULL(SUM(ae.Fine_Amount), 0)) / COUNT(DISTINCT o.Order_ID)
+                    ELSE 0 
+                    END as performanceScore
+                FROM Driver d
+                LEFT JOIN [Order] o ON d.Fleet_ID = (SELECT Fleet_ID FROM Vehicle WHERE License_Plate = o.License_Plate)
+                    AND YEAR(o.Create_Time) = @year AND MONTH(o.Create_Time) = @month
+                LEFT JOIN AbnormalEvent ae ON d.Driver_ID = ae.Driver_ID
+                    AND YEAR(ae.Occur_Time) = @year AND MONTH(ae.Occur_Time) = @month
+                WHERE d.Fleet_ID = @fleetId
+                GROUP BY d.Driver_ID, d.Driver_Name
+                HAVING COUNT(DISTINCT o.Order_ID) > 0
+                ORDER BY performanceScore DESC
+                `)
 
             // 构建报表数据
             const reportData = {

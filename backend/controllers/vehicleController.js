@@ -129,10 +129,10 @@ class VehicleController {
 
             // 构建查询条件
             let whereCondition = `
-        WHERE v.Current_Status = '空闲'
-        AND v.Max_Load >= @weight
-        AND v.Max_Volume >= @volume
-      `
+                WHERE v.Current_Status = '空闲'
+                AND v.Max_Load >= @weight
+                AND v.Max_Volume >= @volume
+            `
 
             // 如果指定了配送中心
             if (dcId) {
@@ -149,25 +149,25 @@ class VehicleController {
 
             // 查询可用车辆
             const result = await request.query(`
-        SELECT 
-          v.License_Plate,
-          v.Max_Load,
-          v.Max_Volume,
-          v.Current_Status,
-          f.Fleet_Name,
-          d.Driver_Name,
-          ISNULL((
-            SELECT SUM(Goods_Weight) 
-            FROM [Order] o 
-            WHERE o.License_Plate = v.License_Plate 
-            AND o.Transport_Status IN ('待运输','装货中','运输中')
-          ), 0) as Current_Load
-        FROM Vehicle v
-        JOIN Fleet f ON v.Fleet_ID = f.Fleet_ID
-        LEFT JOIN Driver d ON f.Supervisor_ID = d.Driver_ID
-        ${whereCondition}
-        ORDER BY v.Max_Load DESC
-      `)
+                SELECT 
+                v.License_Plate,
+                v.Max_Load,
+                v.Max_Volume,
+                v.Current_Status,
+                f.Fleet_Name,
+                d.Driver_Name,
+                ISNULL((
+                    SELECT SUM(Goods_Weight) 
+                    FROM [Order] o 
+                    WHERE o.License_Plate = v.License_Plate 
+                    AND o.Transport_Status IN ('待运输','装货中','运输中')
+                ), 0) as Current_Load
+                FROM Vehicle v
+                JOIN Fleet f ON v.Fleet_ID = f.Fleet_ID
+                LEFT JOIN Driver d ON f.Supervisor_ID = d.Driver_ID
+                ${whereCondition}
+                ORDER BY v.Max_Load DESC
+            `)
 
             // 计算可用载重
             const vehicles = result.recordset.map(vehicle => ({

@@ -67,12 +67,12 @@ class AbnormalController {
                 .input('licensePlate', sql.VarChar(10), licensePlate)
                 .input('driverId', sql.VarChar(10), driverId)
                 .query(`
-          SELECT v.License_Plate, d.Driver_ID
-          FROM Vehicle v
-          JOIN Driver d ON v.Fleet_ID = d.Fleet_ID
-          WHERE v.License_Plate = @licensePlate 
-          AND d.Driver_ID = @driverId
-        `)
+                    SELECT v.License_Plate, d.Driver_ID
+                    FROM Vehicle v
+                    JOIN Driver d ON v.Fleet_ID = d.Fleet_ID
+                    WHERE v.License_Plate = @licensePlate 
+                    AND d.Driver_ID = @driverId
+                    `)
 
             if (checkResult.recordset.length === 0) {
                 return res.status(400).json({
@@ -119,11 +119,11 @@ class AbnormalController {
                 await pool.request()
                     .input('licensePlate', sql.VarChar(10), licensePlate)
                     .query(`
-            UPDATE Vehicle 
-            SET Current_Status = '异常' 
-            WHERE License_Plate = @licensePlate
-            AND Current_Status = '运输中'
-          `)
+                        UPDATE Vehicle 
+                        SET Current_Status = '异常' 
+                        WHERE License_Plate = @licensePlate
+                        AND Current_Status = '运输中'
+                    `)
             }
 
             res.status(200).json({

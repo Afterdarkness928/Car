@@ -122,10 +122,10 @@ class DriverController {
             const driverResult = await pool.request()
                 .input('driverId', sql.VarChar(10), driverId)
                 .query(`
-          SELECT Driver_ID, Driver_Name, License_Level, Hire_Date
-          FROM Driver
-          WHERE Driver_ID = @driverId
-        `)
+                    SELECT Driver_ID, Driver_Name, License_Level, Hire_Date
+                    FROM Driver
+                    WHERE Driver_ID = @driverId
+                    `)
 
             if (driverResult.recordset.length === 0) {
                 return res.status(404).json({
@@ -147,17 +147,17 @@ class DriverController {
             const orderStats = await pool.request()
                 .input('driverId', sql.VarChar(10), driverId)
                 .query(`
-          SELECT 
-            COUNT(*) as totalOrders,
-            SUM(Goods_Weight) as totalWeight,
-            AVG(DATEDIFF(HOUR, Create_Time, Sign_Time)) as avgDeliveryHours
-          FROM [Order] o
-          JOIN Vehicle v ON o.License_Plate = v.License_Plate
-          JOIN Driver d ON v.Fleet_ID = d.Fleet_ID
-          WHERE d.Driver_ID = @driverId
-          AND Transport_Status = '已签收'
-          ${dateCondition}
-        `)
+                    SELECT 
+                        COUNT(*) as totalOrders,
+                        SUM(Goods_Weight) as totalWeight,
+                        AVG(DATEDIFF(HOUR, Create_Time, Sign_Time)) as avgDeliveryHours
+                    FROM [Order] o
+                    JOIN Vehicle v ON o.License_Plate = v.License_Plate
+                    JOIN Driver d ON v.Fleet_ID = d.Fleet_ID
+                    WHERE d.Driver_ID = @driverId
+                    AND Transport_Status = '已签收'
+                    ${dateCondition}
+                    `)
 
             // 统计异常事件
             const abnormalStats = await pool.request()
@@ -175,16 +175,16 @@ class DriverController {
             const orderDetails = await pool.request()
                 .input('driverId', sql.VarChar(10), driverId)
                 .query(`
-          SELECT TOP 50
-            o.Order_ID, o.Create_Time, o.Goods_Weight, o.Destination,
-            o.Sign_Time, o.Transport_Status
-          FROM [Order] o
-          JOIN Vehicle v ON o.License_Plate = v.License_Plate
-          JOIN Driver d ON v.Fleet_ID = d.Fleet_ID
-          WHERE d.Driver_ID = @driverId
-          ${dateCondition}
-          ORDER BY o.Create_Time DESC
-        `)
+                    SELECT TOP 50
+                        o.Order_ID, o.Create_Time, o.Goods_Weight, o.Destination,
+                        o.Sign_Time, o.Transport_Status
+                    FROM [Order] o
+                    JOIN Vehicle v ON o.License_Plate = v.License_Plate
+                    JOIN Driver d ON v.Fleet_ID = d.Fleet_ID
+                    WHERE d.Driver_ID = @driverId
+                    ${dateCondition}
+                    ORDER BY o.Create_Time DESC
+                    `)
 
             // 获取详细异常记录
             const abnormalDetails = await pool.request()
